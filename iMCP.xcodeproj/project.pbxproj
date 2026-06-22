@@ -11,6 +11,8 @@
 		826C0834A5B647F8A918E54D /* ServiceLifecycle in Frameworks */ = {isa = PBXBuildFile; productRef = DCE061F8A68D0CD546D919E2 /* ServiceLifecycle */; };
 		8DFCE9E4CBCBEB93A32E8560 /* ServiceLifecycleTestKit in Frameworks */ = {isa = PBXBuildFile; productRef = 1CD6B9E157EEC273F178543D /* ServiceLifecycleTestKit */; };
 		930214FCD680D7D74158F215 /* ServiceGroupConfigurationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 75E148EAC5AC8B3263C5AA13 /* ServiceGroupConfigurationTests.swift */; };
+		A1B2C3D4E5F6000000000003 /* ReconnectPolicyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6000000000001 /* ReconnectPolicyTests.swift */; };
+		A1B2C3D4E5F6000000000004 /* ReconnectPolicy.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6000000000002 /* ReconnectPolicy.swift */; };
 		F809556E2D7888920055B911 /* TypedStream in Frameworks */ = {isa = PBXBuildFile; productRef = F809556D2D7888920055B911 /* TypedStream */; };
 		F80955702D7888920055B911 /* iMessage in Frameworks */ = {isa = PBXBuildFile; productRef = F809556F2D7888920055B911 /* iMessage */; };
 		F825BDBF2D9AD00E0063ADD7 /* ServiceLifecycle in Frameworks */ = {isa = PBXBuildFile; productRef = F825BDBE2D9AD00E0063ADD7 /* ServiceLifecycle */; };
@@ -54,6 +56,8 @@
 /* Begin PBXFileReference section */
 		6A5CFBBEC66BC8CDA9D65496 /* imcp-serverTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "imcp-serverTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		75E148EAC5AC8B3263C5AA13 /* ServiceGroupConfigurationTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ServiceGroupConfigurationTests.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F6000000000001 /* ReconnectPolicyTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ReconnectPolicyTests.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F6000000000002 /* ReconnectPolicy.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ReconnectPolicy.swift; path = CLI/ReconnectPolicy.swift; sourceTree = SOURCE_ROOT; };
 		E0E66768348853754D32208C /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.0.sdk/System/Library/Frameworks/Cocoa.framework; sourceTree = DEVELOPER_DIR; };
 		F8F44E6D2D59038D0075D79C /* iMCP.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = iMCP.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		F8F44EB62D5908D00075D79C /* imcp-server */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = "imcp-server"; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -139,6 +143,7 @@
 			isa = PBXGroup;
 			children = (
 				75E148EAC5AC8B3263C5AA13 /* ServiceGroupConfigurationTests.swift */,
+				A1B2C3D4E5F6000000000001 /* ReconnectPolicyTests.swift */,
 			);
 			path = CLITests;
 			sourceTree = "<group>";
@@ -326,6 +331,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				930214FCD680D7D74158F215 /* ServiceGroupConfigurationTests.swift in Sources */,
+				A1B2C3D4E5F6000000000003 /* ReconnectPolicyTests.swift in Sources */,
+				A1B2C3D4E5F6000000000004 /* ReconnectPolicy.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

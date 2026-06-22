@@ -24,13 +24,6 @@ if let tcpOptions = parameters.defaultProtocolStack.internetProtocol as? NWProto
     tcpOptions.version = .v4
 }
 
-// Create browser at top level
-let browser = NWBrowser(
-    for: .bonjour(type: serviceType, domain: nil),
-    using: parameters
-)
-log.info("Created Bonjour browser for service type: \(serviceType)")
-
 actor ConnectionState {
     private var hasResumed = false
 
@@ -490,14 +483,19 @@ actor MCPService: Service {
                     continuation in
                     let connectionState = ConnectionState()
 
-                    // Set up a timeout task to ensure we don't wait forever
+                    // Set up a timeout task to ensure we don't wait forever.
+                    // Kept short so a missing app fails faster than the MCP
+                    // client's own initialize timeout; the reconnect loop retries.
                     let timeoutTask = Task {
-                        // Allow 30 seconds to find the service
-                        try await Task.sleep(for: .seconds(30))
+                        // Allow 10 seconds to find the service
+                        try await Task.sleep(for: .seconds(10))
 
                         // If we haven't found a service by now, resume with an error
                         if await connectionState.checkAndSetResumed() {
-                            await log.error("Bonjour service discovery timed out after 30 seconds")
+                            await log.error("Bonjour service discovery timed out after 10 seconds")
+                            // Cancel the browser so its socket/file descriptor is
+                            // released before the loop creates a fresh one on retry.
+                            browser.cancel()
                             continuation.resume(
                                 throwing: MCPError.internalError("Service discovery timeout")
                             )
@@ -584,30 +582,37 @@ actor MCPService: Service {
                 )
                 self.currentProxy = proxy
 
+                // Determine why the proxy stopped. `proxy.start()` returns
+                // normally *only* when stdin reaches EOF (the MCP client closed
+                // us); every other stop path throws.
+                let outcome: ProxyOutcome
                 do {
                     try await proxy.start()
+                    outcome = .stdinClosed
                 } catch let error as StdioProxyError {
                     switch error {
-                    // Removed stdinTimeout case as it's no longer thrown
-                    // case .stdinTimeout:
-                    //     await log.info("Stdin timed out, will reconnect...")
-                    //     try await Task.sleep(for: .seconds(1))
-                    //     continue
                     case .networkTimeout:
-                        await log.info("Network timed out, will reconnect...")
-                        try await Task.sleep(for: .seconds(1))
-                        continue
+                        outcome = .networkTimedOut
                     case .connectionClosed:
-                        await log.critical("Connection closed, terminating...")
-                        return
+                        outcome = .connectionDropped
                     }
                 } catch let error as NWError where error.errorCode == 54 || error.errorCode == 57 {
-                    // Handle connection reset by peer (54) or socket not connected (57)
-                    await log.critical("Network connection terminated: \(error), shutting down...")
-                    return
+                    // Connection reset by peer (54) or socket not connected (57).
+                    await log.debug("Network connection reset: \(error)")
+                    outcome = .connectionDropped
                 } catch {
-                    // Rethrow other errors to be handled by the outer catch block
+                    // Rethrow other errors to the outer catch block (5s backoff retry).
                     throw error
+                }
+
+                switch reconnectDecision(for: outcome) {
+                case .terminate:
+                    await log.info("stdin closed by client; shutting down.")
+                    return
+                case .reconnect(let afterSeconds):
+                    await log.info("Connection to iMCP app ended (\(outcome)); reconnecting…")
+                    try await Task.sleep(for: .seconds(afterSeconds))
+                    continue
                 }
             } catch {
                 // Handle all other errors with retry
