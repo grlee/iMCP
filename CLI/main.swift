@@ -456,11 +456,8 @@ actor StdioProxy {
     }
 }
 
-// Define custom errors for the StdioProxy
-enum StdioProxyError: Swift.Error {
-    case networkTimeout
-    case connectionClosed
-}
+// `StdioProxyError` is defined in ReconnectPolicy.swift so the CLI test target
+// can see it; see the note there.
 
 // Create MCPService class to manage lifecycle
 actor MCPService: Service {
@@ -589,29 +586,25 @@ actor MCPService: Service {
                 do {
                     try await proxy.start()
                     outcome = .stdinClosed
-                } catch let error as StdioProxyError {
-                    switch error {
-                    case .networkTimeout:
-                        outcome = .networkTimedOut
-                    case .connectionClosed:
-                        outcome = .connectionDropped
-                    }
-                } catch let error as NWError where error.errorCode == 54 || error.errorCode == 57 {
-                    // Connection reset by peer (54) or socket not connected (57).
-                    await log.debug("Network connection reset: \(error)")
-                    outcome = .connectionDropped
                 } catch {
-                    // Rethrow other errors to the outer catch block (5s backoff retry).
-                    throw error
+                    guard let mapped = proxyOutcome(for: error) else {
+                        // Not an expected drop — rethrow to the outer catch,
+                        // which logs at .error and applies a 5s backoff.
+                        throw error
+                    }
+                    // Log at .warning (the release log level) and include the
+                    // underlying error, so a mid-session drop — and especially a
+                    // persistent reconnect loop — is visible in shipped builds.
+                    await log.warning("Connection to iMCP app dropped (\(mapped)): \(error)")
+                    outcome = mapped
                 }
 
                 switch reconnectDecision(for: outcome) {
                 case .terminate:
                     await log.info("stdin closed by client; shutting down.")
                     return
-                case .reconnect(let afterSeconds):
-                    await log.info("Connection to iMCP app ended (\(outcome)); reconnecting…")
-                    try await Task.sleep(for: .seconds(afterSeconds))
+                case .reconnect(let delay):
+                    try await Task.sleep(for: delay)
                     continue
                 }
             } catch {
